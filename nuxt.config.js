@@ -15,6 +15,33 @@ module.exports = {
   },
   plugins: ['~/plugins/vuetify.js'],
   css: ['~/assets/style/app.styl'],
+  modules: [
+    '@nuxtjs/axios',
+    '@nuxtjs/auth'
+  ],
+  router: {
+    middleware: ['auth']
+  },
+  auth: {
+    redirect: {
+      login: '/user/login',
+      logout: '/user/login',
+      callback: false,
+      home: '/'
+    },
+    strategies: {
+      local: {
+        endpoints: {
+          login: { url: '/auth/sign_in', method: 'post', propertyName: 'token' },
+          logout: { url: '/auth/sign_out', method: 'delete' },
+          user: { url: '/auth/current', method: 'get', propertyName: 'user' }
+        }
+      }
+    }
+  },
+  axios: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000'
+  },
   /*
   ** Customize the progress bar color
   */
