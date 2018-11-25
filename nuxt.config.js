@@ -13,7 +13,10 @@ module.exports = {
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
-  plugins: ['~/plugins/vuetify.js'],
+  plugins: [
+    '~/plugins/vuetify.js',
+    '~/plugins/veevalidate.js'
+  ],
   css: ['~/assets/style/app.styl'],
   modules: [
     '@nuxtjs/axios',
