@@ -15,7 +15,8 @@ module.exports = {
   },
   plugins: [
     '~/plugins/vuetify.js',
-    '~/plugins/veevalidate.js'
+    '~/plugins/veevalidate.js',
+    '~/plugins/vueqr.js'
   ],
   css: ['~/assets/style/app.styl'],
   modules: [
@@ -23,7 +24,18 @@ module.exports = {
     '@nuxtjs/auth'
   ],
   router: {
-    middleware: ['auth']
+    middleware: ['auth'],
+    extendRoutes (routes, resolve) {
+      routes.push({
+        name: 'register-success',
+        path: '/user/register/success',
+        component: resolve(__dirname, 'pages/user/register.vue')
+      }, {
+        name: 'recovery-success',
+        path: '/user/password-recovery/success',
+        component: resolve(__dirname, 'pages/user/password-recovery-success.vue')
+      })
+    }
   },
   auth: {
     redirect: {
