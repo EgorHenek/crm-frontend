@@ -28,3 +28,12 @@
     </v-flex>
   </v-layout>
 </template>
+
+<script>
+  export default {
+    async fetch ({ store, params }) {
+      await store.dispatch('tasks/init')
+      await store.dispatch('news/init')
+    }
+  }
+</script>

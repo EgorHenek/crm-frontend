@@ -8,6 +8,7 @@
           :value="error.message"
           :type="error.type"
           :icon="error.icon"
+          v-if="error.message"
       >
         {{ error.message }}
       </v-alert>
