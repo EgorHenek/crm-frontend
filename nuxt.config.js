@@ -14,9 +14,11 @@ module.exports = {
     ]
   },
   plugins: [
-    '~/plugins/vuetify.js',
-    '~/plugins/veevalidate.js',
-    '~/plugins/vueqr.js'
+    '@/plugins/vuetify',
+    '@/plugins/veevalidate',
+    '@/plugins/filters',
+    '@/plugins/vueqr',
+    { src: '@/plugins/mavon-editor', srr: false }
   ],
   css: ['~/assets/style/app.styl'],
   modules: [

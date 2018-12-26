@@ -15,7 +15,10 @@
           exact
         >
           <v-list-tile-action>
-            <v-icon v-html="item.icon"></v-icon>
+            <v-badge color="orange" left overlap>
+              <span slot="badge">{{ $store.getters[item.count] }}</span>
+              <v-icon v-html="item.icon"></v-icon>
+            </v-badge>
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title v-text="item.title"></v-list-tile-title>
@@ -70,7 +73,8 @@
       return {
         drawer: true,
         items: [
-          { icon: 'fas fa-tasks', title: 'Задачи', to: '/tasks' }
+          { icon: 'fas fa-tasks', title: 'Задачи', to: '/tasks', count: 'tasks/count' },
+          { icon: 'far fa-newspaper', title: 'Новости', to: '/news', count: 'news/count' }
         ],
         miniVariant: false,
         title: 'CRM'
