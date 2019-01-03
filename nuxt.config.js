@@ -29,10 +29,6 @@ module.exports = {
     middleware: ['auth'],
     extendRoutes (routes, resolve) {
       routes.push({
-        name: 'register-success',
-        path: '/user/register/success',
-        component: resolve(__dirname, 'pages/user/register.vue')
-      }, {
         name: 'recovery-success',
         path: '/user/password-recovery/success',
         component: resolve(__dirname, 'pages/user/password-recovery-success.vue')
