@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'ural-dash',
-      script: 'yarn',
+      script: 'yarn.js',
       args: 'start',
       env: {
         NODE_ENV: 'production',
