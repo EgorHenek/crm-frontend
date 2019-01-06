@@ -97,6 +97,27 @@ export default {
   },
   layout: 'FullScreenForm',
   asyncData({ route, app }) {
+    if (route.query.confirmation_token) {
+      return app.$axios.get('/auth/confirmation', {
+        params: {
+          confirmation_token: route.query.confirmation_token,
+        },
+      }).then(() => ({
+        error: {
+          type: 'success',
+          message: 'Аккаунт подтверждён',
+          icon: 'fas fa-check',
+        },
+      }))
+        .catch(() => ({
+          error: {
+            type: 'error',
+            message: 'Неверный код подтверждения',
+            icon: 'fas fa-exclamation-triangle',
+          },
+        }));
+    }
+
     if (route.query.unlock_token) {
       return app.$axios.get('/auth/unlock', {
         params: {

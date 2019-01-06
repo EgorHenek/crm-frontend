@@ -5,7 +5,7 @@
         flat
         color="white"
       >
-        <v-toolbar-title>Клиенты</v-toolbar-title>
+        <v-toolbar-title>Пользователи</v-toolbar-title>
         <v-divider
           class="mx-2"
           inset
@@ -18,7 +18,39 @@
           single-line
           hide-details
         />
+
         <v-spacer />
+
+        <v-dialog
+          v-if="deleteItem"
+          v-model="delete_dialog"
+          persistent
+          max-width="290"
+        >
+          <v-card>
+            <v-card-title class="headline">
+              Вы действительно хотите {{ deleteItem.attributes.blocked | deleteStatus }}
+              <b>{{ deleteItem.attributes.full_name }}</b>?
+            </v-card-title>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn
+                color="green darken-1"
+                flat
+                @click="delete_dialog = false"
+              >
+                Нет
+              </v-btn>
+              <v-btn
+                color="red darken-1 white--text"
+                @click="blockUser(deleteItem)"
+              >
+                Да
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <v-dialog
           v-model="dialog"
           max-width="500px"
@@ -44,18 +76,6 @@
                   <v-form
                     ref="form"
                   >
-                    <v-flex xs12>
-                      <v-text-field
-                        v-model="editedItem.name"
-                        v-validate="'required'"
-                        name="name"
-                        label="Имя"
-                        data-vv-as="Name"
-                        :error-messages="errors.collect('name')"
-                        type="text"
-                        required
-                      />
-                    </v-flex>
                     <v-flex
                       xs12
                       md6
@@ -71,35 +91,47 @@
                         required
                       />
                     </v-flex>
-                    <v-flex
-                      xs12
-                      md6
-                    >
+                    <v-flex xs12>
                       <v-text-field
-                        v-model="editedItem.phone"
-                        v-validate="'length:10'"
-                        mask="phone"
-                        name="phone"
-                        prefix="+7"
-                        label="Телефон"
-                        data-vv-as="phone"
-                        :error-messages="errors.collect('phone')"
+                        v-model="editedItem.first_name"
+                        v-validate="'required'"
+                        name="first_name"
+                        label="Имя"
+                        data-vv-as="имя"
+                        :error-messages="errors.collect('first_name')"
                         type="text"
                         required
                       />
                     </v-flex>
-                    <v-flex
-                      xs12
-                    >
-                      <v-switch
-                        v-model="editedItem.promotion"
-                        label="Подписка на рассылку"
+                    <v-flex xs12>
+                      <v-text-field
+                        v-model="editedItem.second_name"
+                        v-validate="'required'"
+                        name="second_name"
+                        label="Фамилия"
+                        data-vv-as="фамилия"
+                        :error-messages="errors.collect('second_name')"
+                        type="text"
+                        required
                       />
                     </v-flex>
                     <v-flex xs12>
-                      <v-switch
-                        v-model="editedItem.first_contact"
-                        label="Первый контакт"
+                      <v-text-field
+                        v-model="editedItem.last_name"
+                        v-validate="'required'"
+                        name="last_name"
+                        label="Отчество"
+                        data-vv-as="отчество"
+                        :error-messages="errors.collect('last_name')"
+                        type="text"
+                        required
+                      />
+                    </v-flex>
+                    <v-flex xs12>
+                      <v-select
+                        v-model="editedItem.role"
+                        :items="roles"
+                        label="Роль"
                       />
                     </v-flex>
                   </v-form>
@@ -130,7 +162,7 @@
 
       <v-data-table
         :headers="headers"
-        :items="clients.data"
+        :items="users.data"
         :search="search"
         class="elevation-1"
       >
@@ -139,43 +171,36 @@
           slot-scope="props"
         >
           <td>{{ props.item.id }}</td>
-          <td>{{ props.item.attributes.name }}</td>
-          <td class="text-xs-right">
+          <td>{{ props.item.attributes.full_name }}</td>
+          <td class="text-xs-center">
             {{ props.item.attributes.email }}
           </td>
-          <td class="text-xs-right">
-            {{ props.item.attributes.phone }}
+          <td class="text-xs-center">
+            {{ props.item.attributes.role }}
           </td>
-          <td class="text-xs-right">
-            {{ props.item.attributes.address }}
-          </td>
-          <td class="justify-center">
+          <td class="text-xs-center">
             <v-icon
-              v-if="props.item.attributes.promotion"
-              class="green--text"
+              v-if="props.item.attributes.blocked"
+              color="red"
             >
-              fas fa-check
+              fas fa-lock
             </v-icon>
             <v-icon
-              v-if="!props.item.attributes.promotion"
-              class="red--text"
+              v-else
+              color="green"
             >
-              fas fa-times
+              fas fa-lock-open
             </v-icon>
           </td>
-          <td class="justify-center">
-            <v-icon
-              v-if="props.item.attributes.first_contact"
-              class="green--text"
-            >
-              fas fa-check
-            </v-icon>
-            <v-icon
-              v-if="!props.item.attributes.first_contact"
-              class="red--text"
-            >
-              fas fa-times
-            </v-icon>
+          <td class="text-xs-center">
+            {{ props.item.attributes.last_sign_in_at }}
+          </td>
+          <td>
+            <v-checkbox
+              value="props.item.attributes.otp_required_for_login"
+              readonly
+              hide-details
+            />
           </td>
           <td class="justify-center">
             <v-icon
@@ -186,39 +211,12 @@
               fas fa-edit
             </v-icon>
             <v-icon
+              v-if="props.item.attributes.role !== 'admin'"
               small
-              @click="delete_dialog = true"
+              @click="delete_dialog = true; deleteItem = props.item"
             >
               fas fa-trash
             </v-icon>
-
-            <v-dialog
-              v-model="delete_dialog"
-              persistent
-              max-width="290"
-            >
-              <v-card>
-                <v-card-title class="headline">
-                  Вы действительно хотите удалить {{ props.item.attributes.name }}?
-                </v-card-title>
-                <v-card-actions>
-                  <v-spacer />
-                  <v-btn
-                    color="green darken-1"
-                    flat
-                    @click="delete_dialog = false"
-                  >
-                    Нет
-                  </v-btn>
-                  <v-btn
-                    color="red darken-1 white--text"
-                    @click="deleteItem(props.item)"
-                  >
-                    Да
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
           </td>
         </template>
         <v-alert
@@ -244,51 +242,57 @@
 <script>
 export default {
   async asyncData({ $axios }) {
-    const clients = await $axios.$get('/clients');
-    return { clients };
+    const users = await $axios.$get('/users');
+    return { users };
   },
   head() {
     return {
-      title: 'Клиенты',
+      title: 'Пользователи',
     };
+  },
+  filters: {
+    deleteStatus: (blocked) => {
+      if (blocked) return 'разблокировать';
+      return 'заблокировать';
+    },
   },
   data: () => ({
     dialog: false,
     delete_dialog: false,
     editedIndex: -1,
+    deleteItem: '',
     search: '',
     headers: [
-      { text: 'ID', value: 'id' },
+      { text: 'ID', value: 'id', align: 'center' },
       {
-        text: 'Имя',
-        value: 'attributes.name',
+        text: 'ФИО',
+        value: 'attributes.full_name',
         align: 'left',
       },
-      { text: 'email', value: 'attributes.email' },
-      { text: 'Телефон', value: 'attributes.phone', sortable: false },
-      { text: 'Адрес', value: 'attributes.address', sortable: false },
-      { text: 'Подписка на рассылку', value: 'attributes.promotion' },
-      { text: 'Первая связь', value: 'attributes.first_connect' },
+      { text: 'email', value: 'attributes.email', align: 'center' },
+      { text: 'Роль', value: 'attributes.role', align: 'center' },
+      { text: 'Блокировка', value: 'attributes.blocked', align: 'center' },
+      { text: 'Последний вход', value: 'attributes.last_sign_in_at', align: 'center' },
+      { text: 'Двухфакторная авторизация', value: 'attributes.otp_required_for_login', align: 'center' },
       { text: 'Действия', value: 'actions', sortable: false },
     ],
     editedItem: {
-      name: '',
+      first_name: '',
+      second_name: '',
+      last_name: '',
       email: '',
-      phone: '',
-      address: '',
-      promotion: true,
-      first_contact: true,
+      role: 'master',
     },
     defaultItem: {
-      name: '',
+      first_name: '',
+      second_name: '',
+      last_name: '',
       email: '',
-      phone: '',
-      address: '',
-      promotion: true,
-      first_contact: true,
+      role: 'master',
     },
     error: [],
     snackbar: false,
+    roles: ['manager', 'master', 'advertising'],
   }),
   computed: {
     formTitle() {
@@ -296,17 +300,16 @@ export default {
     },
   },
   methods: {
-    deleteItem(item) {
-      const index = this.clients.data.indexOf(item);
-      this.$axios.delete(`/clients/${item.id}`)
+    blockUser(item) {
+      this.$axios.delete(`/users/${item.id}`)
         .then(() => {
           this.delete_dialog = false;
-          this.clients.data.splice(index, 1);
+          this.deleteItem.attributes.blocked = !item.attributes.blocked;
         });
     },
 
     editItem(item) {
-      this.editedIndex = this.clients.data.indexOf(item);
+      this.editedIndex = this.users.data.indexOf(item);
       this.editedItem = Object.assign({}, item.attributes);
       this.dialog = true;
     },
@@ -321,9 +324,9 @@ export default {
 
     save() {
       if (this.editedIndex === -1) {
-        this.$axios.post('/clients', this.editedItem)
+        this.$axios.post('/users', this.editedItem)
           .then((client) => {
-            this.clients.data.push(client.data.data);
+            this.users.data.push(client.data.data);
             this.dialog = false;
             this.editedItem = Object.assign({}, this.defaultItem);
             this.editedIndex = -1;
@@ -333,9 +336,9 @@ export default {
             this.snackbar = true;
           });
       } else {
-        this.$axios.put(`/clients/${this.clients.data[this.editedIndex].id}`, this.editedItem)
+        this.$axios.put(`/users/${this.users.data[this.editedIndex].id}`, this.editedItem)
           .then((client) => {
-            Object.assign(this.clients.data[this.editedIndex], client.data.data);
+            Object.assign(this.users.data[this.editedIndex], client.data.data);
             this.dialog = false;
             this.editedItem = Object.assign({}, this.defaultItem);
             this.editedIndex = -1;

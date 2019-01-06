@@ -9,6 +9,7 @@
       <v-list>
         <v-list-tile
           v-for="(item, i) in items"
+          v-show="item.roles || item.roles.includes($auth.user.roles[0])"
           :key="i"
           router
           :to="item.to"
@@ -92,12 +93,17 @@ export default {
       drawer: true,
       items: [
         {
-          icon: 'fas fa-tasks', title: 'Задачи', to: '/tasks', count: 'tasks/count',
+          icon: 'fas fa-tasks', title: 'Задачи', to: '/tasks', count: 'tasks/count', roles: true,
         },
         {
-          icon: 'far fa-newspaper', title: 'Новости', to: '/news', count: 'news/count',
+          icon: 'far fa-newspaper', title: 'Новости', to: '/news', count: 'news/count', roles: ['admin', 'manager'],
         },
-        { icon: 'fas fa-users', title: 'Клиенты', to: '/clients' },
+        {
+          icon: 'fas fa-users', title: 'Клиенты', to: '/clients', roles: true,
+        },
+        {
+          icon: 'fas fa-user-tie', title: 'Пользователи', to: '/users', roles: ['admin'],
+        },
       ],
       miniVariant: false,
       title: 'CRM',
