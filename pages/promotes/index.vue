@@ -5,7 +5,7 @@
         flat
         color="white"
       >
-        <v-toolbar-title>Клиенты</v-toolbar-title>
+        <v-toolbar-title>Рассылки</v-toolbar-title>
         <v-divider
           class="mx-2"
           inset
@@ -21,7 +21,7 @@
         <v-spacer />
         <v-dialog
           v-model="dialog"
-          max-width="500px"
+          max-width="1000px"
         >
           <v-btn
             slot="activator"
@@ -46,61 +46,24 @@
                   >
                     <v-flex xs12>
                       <v-text-field
-                        v-model="editedItem.name"
+                        v-model="editedItem.title"
                         v-validate="'required'"
-                        name="name"
-                        label="Имя"
-                        data-vv-as="Name"
-                        :error-messages="errors.collect('name')"
+                        name="title"
+                        label="Заголовок"
+                        data-vv-as="title"
+                        :error-messages="errors.collect('title')"
                         type="text"
                         required
-                      />
-                    </v-flex>
-                    <v-flex
-                      xs12
-                      md6
-                    >
-                      <v-text-field
-                        v-model="editedItem.email"
-                        v-validate="'email'"
-                        name="email"
-                        label="Email"
-                        data-vv-as="email"
-                        :error-messages="errors.collect('email')"
-                        type="text"
-                        required
-                      />
-                    </v-flex>
-                    <v-flex
-                      xs12
-                      md6
-                    >
-                      <v-text-field
-                        v-model="editedItem.phone"
-                        v-validate="'length:10'"
-                        mask="phone"
-                        name="phone"
-                        prefix="+7"
-                        label="Телефон"
-                        data-vv-as="phone"
-                        :error-messages="errors.collect('phone')"
-                        type="text"
-                        required
-                      />
-                    </v-flex>
-                    <v-flex
-                      xs12
-                    >
-                      <v-switch
-                        v-model="editedItem.promotion"
-                        label="Подписка на рассылку"
                       />
                     </v-flex>
                     <v-flex xs12>
-                      <v-switch
-                        v-model="editedItem.first_contact"
-                        label="Первый контакт"
-                      />
+                      <no-ssr>
+                        <mavon-editor
+                          v-model="editedItem.text"
+                          language="ru"
+                          :toolbars="toolbar"
+                        />
+                      </no-ssr>
                     </v-flex>
                   </v-form>
                 </v-layout>
@@ -130,7 +93,7 @@
 
       <v-data-table
         :headers="headers"
-        :items="clients.data"
+        :items="promotes.data"
         :search="search"
         class="elevation-1"
       >
@@ -139,43 +102,26 @@
           slot-scope="props"
         >
           <td>{{ props.item.id }}</td>
-          <td>{{ props.item.attributes.name }}</td>
-          <td class="text-xs-right">
-            {{ props.item.attributes.email }}
-          </td>
-          <td class="text-xs-right">
-            {{ props.item.attributes.phone }}
-          </td>
-          <td class="text-xs-right">
-            {{ props.item.attributes.address }}
-          </td>
-          <td class="justify-center">
-            <v-icon
-              v-if="props.item.attributes.promotion"
-              class="green--text"
-            >
-              fas fa-check
+          <td>{{ props.item.attributes.title }}</td>
+          <td>
+            <v-icon v-if="props.item.attributes.status == 'process'">
+              fas fa-hourglass-start
             </v-icon>
-            <v-icon
-              v-if="!props.item.attributes.promotion"
-              class="red--text"
-            >
-              fas fa-times
+            <v-icon v-if="props.item.attributes.status == 'finish'">
+              fas fa-hourglass-end
+            </v-icon>
+            <v-icon v-if="props.item.attributes.status == 'not started'">
+              fas fa-stop
             </v-icon>
           </td>
-          <td class="justify-center">
-            <v-icon
-              v-if="props.item.attributes.first_contact"
-              class="green--text"
-            >
-              fas fa-check
-            </v-icon>
-            <v-icon
-              v-if="!props.item.attributes.first_contact"
-              class="red--text"
-            >
-              fas fa-times
-            </v-icon>
+          <td>
+            {{ $options.filters.dateFormat(props.item.attributes.started_at, 'YYYY-MM-DD HH:mm') }}
+          </td>
+          <td>
+            {{ $options.filters.dateFormat(props.item.attributes.complete_at, 'YYYY-MM-DD HH:mm') }}
+          </td>
+          <td>
+            {{ $options.filters.dateFormat(props.item.attributes.created_at, 'YYYY-MM-DD HH:mm') }}
           </td>
           <td class="justify-center">
             <v-icon
@@ -187,9 +133,18 @@
             </v-icon>
             <v-icon
               small
+              class="mr-2"
               @click="delete_dialog = true"
             >
               fas fa-trash
+            </v-icon>
+            <v-icon
+              small
+              color="green"
+              @click="startItem(props.item)"
+              v-if="props.item.attributes.status == 'not started'"
+            >
+              fas fa-play
             </v-icon>
 
             <v-dialog
@@ -244,13 +199,8 @@
 <script>
 export default {
   async asyncData({ $axios }) {
-    const clients = await $axios.$get('/clients');
-    return { clients };
-  },
-  head() {
-    return {
-      title: 'Клиенты',
-    };
+    const promotes = await $axios.$get('/promotes');
+    return { promotes };
   },
   data: () => ({
     dialog: false,
@@ -259,56 +209,95 @@ export default {
     search: '',
     headers: [
       { text: 'ID', value: 'id' },
-      {
-        text: 'Имя',
-        value: 'attributes.name',
-        align: 'left',
-      },
-      { text: 'email', value: 'attributes.email' },
-      { text: 'Телефон', value: 'attributes.phone', sortable: false },
-      { text: 'Адрес', value: 'attributes.address', sortable: false },
-      { text: 'Подписка на рассылку', value: 'attributes.promotion' },
-      { text: 'Первая связь', value: 'attributes.first_connect' },
+      { text: 'Заголовок', value: 'attributes.title' },
+      { text: 'Статус', value: 'attributes.status' },
+      { text: 'Началась', value: 'attributes.started_at' },
+      { text: 'Закончена', value: 'attributes.complete_at' },
+      { text: 'Создана', value: 'attributes.created_at' },
       { text: 'Действия', value: 'actions', sortable: false },
     ],
     editedItem: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      promotion: true,
-      first_contact: true,
+      title: '',
+      text: '',
     },
     defaultItem: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      promotion: true,
-      first_contact: true,
+      title: '',
+      text: '',
     },
     error: [],
     snackbar: false,
+    toolbar: {
+      bold: true,
+      italic: true,
+      header: true,
+      underline: true,
+      strikethrough: true,
+      mark: true,
+      superscript: true,
+      subscript: true,
+      quote: true,
+      ol: true,
+      ul: true,
+      link: true,
+      imagelink: false,
+      code: true,
+      table: true,
+      fullscreen: true,
+      readmodel: true,
+      htmlcode: true,
+      help: true,
+      undo: true,
+      redo: true,
+      trash: true,
+      save: false,
+      navigation: false,
+      alignleft: true,
+      aligncenter: true,
+      alignright: true,
+      subfield: true,
+      preview: true,
+    },
   }),
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? 'Добавление' : 'Изменение';
     },
   },
+  mounted() {
+    setInterval(() => {
+      this.$axios.$get('/promotes')
+        .then((promote) => {
+          this.promotes.data = promote.data;
+        });
+    }, 3000);
+  },
+  head() {
+    return {
+      title: 'Рассылки',
+    };
+  },
   methods: {
     deleteItem(item) {
-      const index = this.clients.data.indexOf(item);
-      this.$axios.delete(`/clients/${item.id}`)
+      const index = this.promotes.data.indexOf(item);
+      this.$axios.delete(`/promotes/${item.id}`)
         .then(() => {
           this.delete_dialog = false;
-          this.clients.data.splice(index, 1);
+          this.promotes.data.splice(index, 1);
         });
     },
 
     editItem(item) {
-      this.editedIndex = this.clients.data.indexOf(item);
+      this.editedIndex = this.promotes.data.indexOf(item);
       this.editedItem = Object.assign({}, item.attributes);
       this.dialog = true;
+    },
+
+    startItem(item) {
+      const index = this.promotes.data.indexOf(item);
+      this.$axios.post(`/promotes/${item.id}/start`)
+        .then(() => {
+          this.item[index].attributes.status = 'process';
+        });
     },
 
     close() {
@@ -321,9 +310,9 @@ export default {
 
     save() {
       if (this.editedIndex === -1) {
-        this.$axios.post('/clients', this.editedItem)
-          .then((client) => {
-            this.clients.data.push(client.data.data);
+        this.$axios.post('/promotes', this.editedItem)
+          .then((promote) => {
+            this.promotes.data.push(promote.data.data);
             this.dialog = false;
             this.editedItem = Object.assign({}, this.defaultItem);
             this.editedIndex = -1;
@@ -333,9 +322,9 @@ export default {
             this.snackbar = true;
           });
       } else {
-        this.$axios.put(`/clients/${this.clients.data[this.editedIndex].id}`, this.editedItem)
-          .then((client) => {
-            Object.assign(this.clients.data[this.editedIndex], client.data.data);
+        this.$axios.put(`/promotes/${this.promotes.data[this.editedIndex].id}`, this.editedItem)
+          .then((promote) => {
+            Object.assign(this.promotes.data[this.editedIndex], promote.data.data);
             this.dialog = false;
             this.editedItem = Object.assign({}, this.defaultItem);
             this.editedIndex = -1;

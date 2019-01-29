@@ -104,6 +104,9 @@ export default {
         {
           icon: 'fas fa-user-tie', title: 'Пользователи', to: '/users', roles: ['admin'],
         },
+        {
+          icon: 'fas fa-envelope', title: 'Рассылки', to: '/promotes', roles: ['admin', 'manager', 'advertising'],
+        },
       ],
       miniVariant: false,
       title: 'CRM',
